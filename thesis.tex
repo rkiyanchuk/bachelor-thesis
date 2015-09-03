@@ -1,0 +1,52 @@
+%&latex
+% Copyright 2011 Ruslan Kiyanchuk (c) <ruslan.kiyanchuk@gmail.com>
+
+\documentclass[a4paper, 14pt]{dstu3008}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows,decorations.pathmorphing,backgrounds,positioning,fit,decorations.pathreplacing}
+\geometry{left=25mm,right=15mm,top=20mm,bottom=20mm}
+\graphicspath{{images/}{images/lwc/}{images/zuc/}}
+
+% for quick removing labour protection part required by the university.
+\newif\iflabour
+\labourtrue
+\iflabour
+\newcommand{\labourprotection}[1]{#1}
+\else
+\newcommand{\labourprotection}[1]{}
+\fi
+
+\title{Cryptographic properties analysis of symmetric ciphers}
+\author{Ruslan I. Kiyanchuk}
+
+
+\hypersetup{
+pdfauthor = {Ruslan I. Kiyanchuk},
+pdftitle = {Cryptographic properties analysis of symmetric ciphers},
+}
+
+\begin{document}
+\selectlanguage{english}
+
+\input{title}
+\input{abstracts}
+\tableofcontents
+\clearpage
+\input{abbreviations}
+
+\input{introduction}
+\input{symmetric_transforms}
+\input{lwc}
+\input{zuc}
+\input{algebraic}
+\input{implementation}
+\labourprotection{\input{labour}}
+\input{conclusions}
+
+\addcontentsline{toc}{chapter}{REFERENCES}
+\bibliography{references.bib}
+\input{appendices}
+
+\end{document}
+

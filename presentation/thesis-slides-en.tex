@@ -1,0 +1,406 @@
+%&latex
+% Copyright 2011 Zoresvit (c) <zoresvit@gmail.com>
+
+\documentclass[10pt, ucs]{beamer}
+\usefonttheme[onlymath]{serif}
+\usetheme{zslides}
+\usepackage{xcolor}
+\usepackage{tikz}
+
+%\usepackage{pgfpages}
+%\pgfpagesuselayout{2 on 1}[a4paper,border shrink=5mm]
+%\mode<handout>{\setbeamercolor{background canvas}{bg=black!5}}
+
+\overviewsection
+
+\graphicspath{{images/}}
+\setbeamercolor{alerted text}{fg=red!50!black}
+
+\addtobeamertemplate{title page}{%
+\vspace*{2ex}\Large\centering Kharkiv National University of Radio Electronics \\
+}{}
+
+\newcommand{\worktitle}{Cryptographic properties analysis \\ of symmetric ciphers \\[2ex]}
+\newcommand{\workauthors}{Ruslan Kiyanchuk}
+
+
+\title[Symmetric ciphers cryptographic properties]{\worktitle}
+\author[\workauthors]{
+    \texorpdfstring{Ruslan Kiyanchuk\\[2ex]
+    \scriptsize\url{ruslan.kiyanchuk@gmail.com}}{\workauthors} \\[4ex]%
+    \begin{flushleft}
+    \hspace*{10em}
+    \normalsize Supervisor: \hspace*{10ex} Halimov G. Z. \\[0.8ex]
+    \hspace*{7em}
+    \normalsize Consultant: \hspace*{10ex} Oliynykov R. V.
+    \end{flushleft} \\[-8ex]
+}
+
+\subtitle{Bachelor Thesis}
+\institute[KNURE]{}
+\date[Kharkiv 2012]{\normalsize Kharkiv 2012}
+
+\hypersetup{
+pdftitle = {\worktitle},
+pdfauthor = {\workauthors}, 
+pdfkeywords = {}
+}
+
+
+\begin{document}
+\selectlanguage{english}
+\maketitle
+
+\section{Importance}
+\begin{frame}{Importance}{Current problems}
+    \begin{block}{}
+        \begin{itemize}
+            \item Modern cryptoalgorithms use advanced mathematics.
+            \item Real security systems often have weaknesses due to incorrect
+                usage or implementation errors.
+        \end{itemize}
+    \end{block}
+    \alert{GSM standard:}
+    \begin{description}
+        \item[A5/1] can be broken in seconds (using rainbow tables).
+    \end{description}
+    \alert{Satellite phones:}
+    \begin{description}
+        \item[GMR-1] based on A5/2 (prohibited for use since 2007).
+        \item[GMR-2] proprietary algorithm (attack requires $65$~b keystream).
+    \end{description}
+    \alert{Wireless Internet:}
+    \begin{description}
+        \item [WEP] about $80000$ packets are needed for cryptanalysis.
+        \item[E0] attack requires $2^{38}$ operations and $2^{23.8}$~data
+            frames.
+    \end{description}
+    \begin{block}{}
+        Deep analysis and public evaluation of ciphers is needed before deploying
+        into real security systems.
+    \end{block}
+\end{frame}
+
+\begin{frame}{Importance}{Cryptography evolution trends}
+    \onslide<1->{
+    \begin{block}{Lightweight cryptography}
+        \begin{itemize}
+            \item pervasive devices must provide data security;
+            \item the computational resources are constrained;
+            \item ciphers with efficient hardware implementation are needed.
+        \end{itemize}    
+    \end{block}
+    }
+    \onslide<2->{
+    \begin{block}{Mobile communication standards}
+        \begin{itemize}
+            \item new ciphers are needed for next generation LTE security;
+            \item ZUC is Chinese stream cipher developed in 2011;
+            \item the cipher is undergoing public evaluation period.
+        \end{itemize}
+    \end{block}
+    }
+    \onslide<3->{
+    \begin{block}{GOST~28147 revisited}
+        \begin{itemize}
+            \item proposed for ISO standardization in 2010;
+            \item is perspective for lightweight cryptography purposes;
+            \item lacks strength evaluation against algebraic cryptanalysis.
+        \end{itemize}
+    \end{block}
+    }
+\end{frame}
+
+\section{ZUC cryptographic properties}
+\begin{frame}{ZUC stream cipher}{Perspective for usage in LTE}
+    \begin{minipage}{0.4 \textwidth}
+        \begin{itemize}
+            \item 16 elements over {\small $GF(p) = GF(2^{31}-1)$};
+            \item period $p^{16} -1 \approx 2^{496}$;
+            \item $X_0 = s_{15_H} || s_{14_L}$,  \\ 
+                $X_1 = s_{11_L} || s_{14_H}$,  \\ 
+                $X_2 = s_{7_L} || s_{5_H}$,  \\ 
+                $X_3 = s_{2_L} || s_{0_H}$;
+            \item $R_1$, $R_2$ -- registers;
+            \item $L_1$, $L_2$
+                linear transformations --
+                polynomials over $GF(2)[x]/(x^{32}+1)$;
+            \item $S \rightarrow (S_0, S_1, S_0, S_1)$.
+        \end{itemize}
+        \begin{block}{}
+            Negligible defect is revealed in linear transformations.
+        \end{block}
+    \end{minipage}%
+        \hspace*{1.6ex}%
+    \begin{minipage}{0.6 \textwidth}
+        \input{zuc}
+    \end{minipage}
+\end{frame}
+
+
+\begin{frame}{ZUC stream cipher}{Linear feedback shift register randomness}
+    \begin{block}{}
+        \begin{itemize}
+            \item \textcolor{red}{All key and IV bits equal 1}
+            \item \textcolor{blue}{All key and IV bits equal 0}
+        \end{itemize}
+    \end{block}
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[scale=0.5]{correlation}
+        \caption{Correlation of LFSR state before and after initialization}
+        \label{fig:corr}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{ZUC stream cipher}{Keystream randomness}
+    \begin{block}{}
+        \begin{itemize}
+            \item $55$ keystream samples with long bit series, each $65504$
+                bits long;
+            \item $163 / 189$ tests run;
+            \item successfully passed $162$ tests.
+        \end{itemize}
+    \end{block}
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[scale=0.5]{stats}
+        \caption{Keystream randomness testing results}
+        \label{fig:corr}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{ZUC stream cipher}{Analysis results}
+    \begin{block}{Summary}
+        \begin{itemize}
+            \item a defect in ZUC linear transformation is revealed;
+            \item cipher structure does not allow to exploit the property;
+            \item yet linear transformation needs improvement before being used
+                for development of future cryptographic algorithms;
+            \item cross correlation deviations of LFSR states are observed for
+                the keys with long bit series;
+            \item keystream satisfies randomness criteria according to NIST~STS.
+        \end{itemize}
+    \end{block}
+    \begin{block}{Successful cryptographic design decisions}
+        \begin{itemize}
+            \item combining XOR and modulo addition;
+            \item mixing finite state machine registers state;
+            \item summation of finite state machine output with LFSR bits.
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+
+\section{Perspective lightweight cipher properties and requirements}
+\begin{frame}{Lightweight cryptography}{PRESENT cipher}
+    \begin{minipage}[t]{0.65\textwidth}
+        \begin{itemize}
+            \item 64 bits encryption block.
+            \item Substitution layer: S-box $F_2^4 \rightarrow F_2^4$. \\
+            \item Permutation layer: 
+                \begin{equation}
+                    \label{eqn:player}
+                    \nonumber
+                    P(i) = \left\{
+                    \begin{array}{ll}
+                        i \cdot 16 \mod 63, & i \in {0, \hdots, 62} \\
+                        63,  & i = 63 \enspace .
+                    \end{array} \right.
+                \end{equation}
+            \item 31 round + key whitening.
+            \item Master-key 80 or 128 bits long.
+            \item Key development:
+                \begin{enumerate}
+                    \setlength{\itemsep}{1pt}
+                        \setlength{\parskip}{0pt}
+                        \setlength{\parsep}{0pt}
+                    \item $ [k_{79} k_{78} \hdots k_1 k_0] = [k_{18} k_{17} \hdots k_{20} k_{19}] $;
+                    \item $ [K_{79} k_{78} k_{77} k_{76}] = S[k_{79} k_{78} k_{77} k_{76}] $;
+                    \item $ [k_{19} k_{18} k_{17} k_{16} k_{15}] = [k_{19} k_{18} k_{17} k_{16} k_{15} 
+                        \oplus \mbox{round\_counter}] $.
+                \end{enumerate}
+        \end{itemize}
+    \end{minipage}%
+    \begin{minipage}[t]{0.35\linewidth}
+        \begin{figure}[h]
+            \centering
+            \includegraphics[scale=0.2]{present}
+            \label{fig:present}
+        \end{figure}
+    \end{minipage}
+\end{frame}
+
+\begin{frame}{Lightweight cryptography}{Ciphers comparison}
+    \begin{block}{Rationale}
+        \begin{itemize}
+            \item PRESENT is designed for lightweight crypto; \\
+                it is now an international standard: ISO/IEC~29192-2:2012;
+            \item GOST is an encryption standard in CIS countries, \\
+                has been exposed to cryptanalysis for over 20 years;
+            \item AES is the most widely used cipher.
+        \end{itemize}
+    \end{block}
+    \begin{table}[htbp]
+        \centering
+        \caption{Comparison of PRESENT, AES and GOST 28147-89}
+        \label{tbl:comparison}
+        \begin{tabular}{|l|p{1cm}|p{1cm}|p{2cm}|p{1.2cm}|p{1.5cm}|}
+            \hline
+            Cipher  & key, bits & block, bits & Throughput, Kb/s & Area, GE & Efficiency, $\frac{bps}{\text{GE}}$ \\
+            \hline
+            PRESENT & 80  & 64  & 11.7 & 1075 & 10.89 \\
+            \hline
+            GOST    & 256 & 64  & 14   & 800  & 17.5  \\
+            \hline
+            AES     & 128 & 128 & 80   & 3100 & 25.81 \\
+            \hline
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+\section{Algebraic cryptanalysis of GOST~28147}
+\begin{frame}{Algebraic cryptanalysis}
+    \begin{block}{Claude Shannon}
+        ``Breaking a good cipher should require as much work as solving a system of
+        simultaneous equations in a large number of unknowns of a complex type.''
+    \end{block}
+    \begin{minipage}[t]{0.5\textwidth}
+        \begin{block}{Basic ideas}
+            \begin{enumerate}
+                \item cryptoalgorithm is described by a multivariate quadratic equation system;
+                \item given plaintexts and ciphertexts the polynomial system is
+                    solved to get key variables.
+            \end{enumerate}
+        \end{block}
+    \end{minipage}%
+    \hspace*{1ex}
+    \begin{minipage}[t]{0.5\textwidth}
+        \begin{figure}[htbp]
+            \centering
+            \input{gost}
+            \caption{GOST~28147-89 Round Function}
+        \end{figure}
+    \end{minipage}%
+\end{frame}
+
+\begin{frame}[fragile, shrink=2]{Algebraic cryptanalysis}{Solving equation systems}
+    \begin{block}{GOST~28147-89 equation system}
+        \begin{itemize}
+            \item implemented using SAGE symbolic algebra system;
+            \item single round contains $325$ quadratic equations;
+            \item full cipher is defined by $10432$ polynomials in $4416$ variables;
+            \item $5$ rounds GOST polynomial system is solved using CryptoMiniSat.
+        \end{itemize}
+    \end{block}
+
+    \begin{block}{CryptoMiniSat solver usage}
+    \begin{enumerate}
+        \item multivariate equation system is constructed in ANF using SAGE;
+        \item polynomial system is converted from ANF to CNF with \verb+anf2cnf+;
+        \item \verb+CryptoMiniSat+ finds satisfiable set of variable values.
+    \end{enumerate} 
+    \end{block}
+    \begin{example}
+\begin{lstlisting}
+sage: gost = Gost(rounds=5)
+sage: f = gost.polynomial_system()
+sage: solver = ANFSatSolver(f.ring())
+sage: s, t = solver(f)
+\end{lstlisting}
+    \end{example}
+\end{frame}
+
+\begin{frame}{Conclusions}
+    \small
+    \begin{block}{ZUC cipher analysis}
+        \begin{itemize}
+            \item cryptographic properties of the cipher are researched and
+                linear transformation defects are considered;
+            \item cipher analysis did not reveal any practical
+                weaknesses in the algorithm.
+        \end{itemize}
+    \end{block}
+
+    \begin{block}{Lightweight crypto}
+        \begin{itemize}
+            \item while being a legacy cipher for data security GOST~28147 fits
+                well for lightweight cryptography purposes (even better than PRESENT);
+            \item it's possible to implement GOST cipher using only 800 GE.
+        \end{itemize}
+    \end{block}
+
+    \begin{block}{Algebraic analysis}
+        \begin{itemize}
+            \item GOST algorithm is efficiently defined with quadratic equations;
+            \item 5 rounds of GOST equation system are solvable at the moment;
+            \item with further optimizations multivariate equation systems with
+                more rounds may be successfully solved.
+        \end{itemize} 
+    \end{block}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{Publications}
+    \scriptsize
+    \begingroup
+    \renewcommand{\chapter}[2]{}%
+    \begin{thebibliography}{1}
+            \providecommand*{\BibEmph}[1]{#1}
+            \providecommand*{\cyrdash}{\hbox to.8em{--\hss--}}
+            \providecommand*{\BibDash}{\ifdim\lastskip>0pt\unskip\nobreak\hskip.2em\fi\cyrdash\hskip.2em\ignorespaces}
+
+            \bibitem{Kiyanchuk:DESSERT:2012}
+            \BibEmph{Oliynykov~R.~V., Kiyanchuk~R.~I.} 
+            \newblock {Perspective Symmetric Block Cipher optimized for Hardware Implementation}~// 
+            \newblock {6-th International Conference ``Dependable Systems, Services \& Technologies (DESSERT'12)''}. \BibDash 2012.
+
+            \bibitem{Kiyanchuk:visnyk:2012}
+            \BibEmph{Kiyanchuk~R.~I., Oliynykov~R.~V.} \newblock {Linear transformation properties of
+            ZUC cipher}~// \newblock \BibEmph{Visnyk}. \BibDash 2012. \BibDash{Mathematical modeling. Information technologies. Computer-aided
+            control systems.}
+
+            \bibitem{karazina:zuc}
+            \BibEmph{{Kiyanchuk, R. I. and Oliynykov R. V.}} \newblock {Linear transformation
+            properties of ZUC cipher}~// \newblock {Computer modeling in high-end technologies}~/
+            Kharkiv national university of radio electronics. \BibDash {Kharkiv}, 2012. \BibDash P.~199 -- 202.
+
+            \bibitem{Kiyanchuk:2012:Banking}
+            \BibEmph{Kiyanchuk~R.~I.} \newblock {Differential analysis of S-functions
+            [In~Russian]}~// \newblock {Scientific youth researching for European integration}~/
+            Kharkiv university of banking. \BibDash Kharkiv, 2012. \BibDash Electronic resource on CD-ROM.
+
+            \bibitem{Kiyanchuk:2012:MMF}
+            \BibEmph{Kiyanchuk~R.~I.} \newblock {Differential analysis of S-functions
+            [In~Russian]}~// \newblock {Radioelectronics and youth in XXI century}~/ Kharkiv
+            national university of radio electronics. \BibDash Kharkiv, 2012. \BibDash {С.}~130 -- 131.
+
+            \bibitem{Kiyanchuk:2011:MMF}
+            \BibEmph{Kiyanchuk~R.~I.} \newblock {Comparative analysis of IDEA-like Block Symmetric
+            Ciphers [In~Ukrainian]}~// \newblock {International Conference ``Computer
+            Engineering''}~/ {Kharkiv National University of Radio Electronics} \BibDash Kharkiv, 2011. \BibDash April. \BibDash {С.}~225 -- 227.
+
+            \bibitem{Kiyanchuk:IREF:2011:present}
+            \BibEmph{Oliynykov~R.~V., Kiyanchuk~R.~I.} \newblock{Perspective Symmetric Block Cipher
+            Optimized for Hardware Implementation [In~Russian]}~// \newblock{``Telecommunication
+            Systems and Technologies''}~/ {Kharkiv National University of Radio
+            Electronics}. \BibDash Vol.~II. \BibDash {Kharkiv, Ukraine}, 2011. \BibDash October. \BibDash
+            P.~321 -- 330.
+
+            \bibitem{Kiyanchuk:2011:Customs}
+            \BibEmph{Oliynykov~R.~V., Kiyanchuk~R.~I.} \newblock{Usage of T-functions in Symmetric
+            Cryptographic Transformations [In~Russian]}~// \newblock{``Perspectives of Information
+            and transport-customs technologies in customs affairs, external economic
+            industry and organizations management''}~/ {Kharkiv National University of
+            Radio Electronics}. \BibDash Dnipropetrovs'k, 2011. \BibDash December. \BibDash
+            {С.}~213 -- 215. \BibDash Section 2.
+
+            \bibitem{Kiyanchuk:2009:rijndael}
+            \BibEmph{Dolgov~V.~I., Lysytska~I.~V., Kiyanchuk~R.~I.} \newblock {RIJNDAEL -- Is This a
+            New or Well Forgotten Old Solution? [In~Russian]}~// \newblock{Computer Science and
+            Technologies}~/ {Kharkiv National University of Radio Electronics}. \BibDash
+            2009. \BibDash P.~32 -- 35.
+    \end{thebibliography}
+\endgroup
+\end{frame} 
+\end{document}
+

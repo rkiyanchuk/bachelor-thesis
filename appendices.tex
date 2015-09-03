@@ -1,0 +1,570 @@
+%&latex
+% Copyright 2011 Ruslan Kiyanchuk (c) <ruslan.kiyanchuk@gmail.com>
+% 
+% 
+%/
+
+\titleformat{\chapter}[display]{\center\normalfont\normalsize}{\chaptertitlename\hspace{1em}\thechapter}{1pc}{\MakeUppercase}[\thispagestyle{myheadings}]
+
+\begin{appendices}
+
+
+\chapter{SOURCE CODE FOR \mbox{GOST~28147-89} POLYNOMIAL SYSTEM GENERATOR}
+
+\begin{lstlisting}
+from copy import deepcopy
+from sage.crypto.mq.sbox import SBox
+from sage.rings.polynomial.multi_polynomial_sequence import PolynomialSequence
+from sage.rings.polynomial.multi_polynomial_sequence import PolynomialSequence_generic
+
+
+def inject(self, vars, values):
+    sub_values = dict(zip(vars, values))
+    return self.subs(sub_values)
+PolynomialSequence_generic.inject = inject
+
+def join_systems(mqsystems, instances):
+    var_names = flatten([i.ring.variable_names() for i in instances])
+    common_vars = list(set(var_names))
+    common_ring = BooleanPolynomialRing(len(common_vars), common_vars, \
+                                        order='degrevlex')
+    new_mqsystem = PolynomialSequence([], common_ring)
+    for s in mqsystems:
+        new_mqsystem.extend(list(s))
+    return new_mqsystem
+
+
+class Gost:
+    def _varformatstr(self, name):
+        l = str(max([len(str(self.nrounds)), len(str(self.block_size - 1))]))
+        return name + "%0" + l + "d" + "%0" + l + "d"
+
+    def _varstrs(self, name, round):
+        s = self._varformatstr(name)
+        if s.startswith(self.var_names['block']):
+            return [s % (round, i) for i in range(self.block_size)]
+        else:
+            return [s % (round, i) for i in range(self.halfblock_size)]
+
+    def gen_vars(self, name, round_):
+        return [self.ring(e) for e in self._varstrs(name, round_)]
+
+    def int2bits(self, num, bits):
+        num = Integer(num)
+        return num.digits(base=2, padto=Integer(bits))
+
+    def bits2int(self, num_bits):
+        num = ''.join([str(i) for i in reversed(num_bits)])
+        return int(num, 2)
+
+    def __init__(self, **kwargs):
+        self.SBOX_SIZE = 4
+        self.nrounds = kwargs.get('rounds', 32)
+        if self.nrounds < 8:
+            self.key_length = self.nrounds
+        else:
+            if self.nrounds % 8 != 0:
+                raise ValueError('Number of rounds must be multiple of 8')
+            self.key_length = 8
+        self.block_size = kwargs.get('block_size', 64)
+        if self.block_size % self.SBOX_SIZE != 0 or self.block_size < 8:
+            raise ValueError('Block size must be multiple of 4 
+                    (due to SBox) and greater than 8 (due S-box size)')
+        self.halfblock_size = self.block_size / 2
+        self.key_order = kwargs.get('key_order', 'frwrev')
+        if self.key_order not in ['frw', 'frwrev']:
+            raise ValueError('Unsupported key ordering')
+        if self.key_order is 'frwrev' and self.nrounds % 8 != 0:
+            raise ValueError('frwrev key ordering is only possible 
+                    for nrounds to be multiple of 8')
+        self.key_add = kwargs.get('key_add', 'mod')
+        if self.key_add not in ['mod', 'xor']:
+            raise ValueError('key_add may be set to `mod` or `xor`')
+
+        self._init_sboxes(kwargs.get('sboxes', None))
+        pre = kwargs.get('prefix', '')
+        self.var_names = {'key': 'K', 
+                'block': pre + 'X', 
+                'sum': pre + 'Y',
+                'sbox': pre + 'Z'}
+        self.gen_ring()
+
+    def _init_sboxes(self, sboxes):
+        self._default_sboxes = [
+                [4, 10, 9, 2, 13, 8, 0, 14, 6, 11, 1, 12, 7, 15, 5, 3],
+                [14, 11, 4, 12, 6, 13, 15, 10, 2, 3, 8, 1, 0, 7, 5, 9],
+                [5, 8, 1, 13, 10, 3, 4, 2, 14, 15, 12, 7, 6, 0, 9, 11],
+                [7, 13, 10, 1, 0, 8, 9, 15, 14, 4, 6, 12, 11, 2, 5, 3],
+                [6, 12, 7, 1, 5, 15, 13, 8, 4, 10, 9, 14, 0, 3, 11, 2],
+                [4, 11, 10, 0, 7, 2, 1, 13, 3, 6, 8, 5, 9, 12, 15, 14],
+                [13, 11, 4, 1, 3, 15, 5, 9, 0, 10, 14, 7, 6, 8, 2, 12],
+                [1, 15, 13, 0, 5, 7, 10, 4, 9, 2, 3, 14, 6, 11, 8, 12]
+                ]
+        if not sboxes:
+            sboxes = self._default_sboxes
+        else:
+            for s in sboxes:
+                if len(s) != 2 ^ self.SBOX_SIZE: 
+                    raise TypeError('S-box must be 4x4 bits (0..15)')
+        self.sboxes = [SBox(i, big_endian=False) for i in sboxes]
+
+    def gen_ring(self):
+        nr = self.nrounds
+        bs = self.block_size
+        hbs = self.halfblock_size
+        var_names = []
+        halfblock_vars = [self.var_names['key'], \
+                            self.var_names['sum'], \
+                            self.var_names['sbox']]
+        for r in range(nr):
+            var_names += [self._varformatstr(v) % (r, b) 
+                    for v in halfblock_vars for b in xrange(hbs)]
+        for r in range(nr + 1):
+            var_names += [self._varformatstr(self.var_names['block']) % (r, b) 
+                    for b in xrange(bs)]
+        self.ring = BooleanPolynomialRing(len(var_names), var_names, \
+                                            order='degrevlex') 
+        return self.ring
+
+    def polynomial_system(self):
+        hbs = self.halfblock_size
+        mqsystem_parts = []
+
+        kvars = list()
+        for i in range(self.key_length):
+            kvars.append(map(self.ring, \
+                    self.gen_vars(self.var_names['key'], i)))
+
+        for i in range(self.nrounds):
+            xvars = map(self.ring, self.gen_vars(self.var_names['block'], i))
+            yvars = map(self.ring, self.gen_vars(self.var_names['sum'], i))
+            zvars = map(self.ring, self.gen_vars(self.var_names['sbox'], i))
+            next_xvars = map(self.ring, \
+                    self.gen_vars(self.var_names['block'], i + 1))
+            polynomials = []
+            
+            if self.key_order == 'frwrev' and \
+                    i >= (self.nrounds - self.key_length):
+                k = self.key_length - 1 - (i % self.key_length)
+            else:
+                k = i % self.key_length
+            polynomials += self.add_round_key(xvars[:hbs], kvars[k], yvars)
+            polynomials += self.polynomials_sbox(yvars, zvars)
+            zvars = self.shift(zvars)
+            xored = self.xor_blocks(xvars[hbs:], zvars)
+            if i < self.nrounds - 1:
+                # R_{i+1} = L_i xor f(R_i)
+                polynomials += [x + y for x, y in zip(xored, \
+                                                        next_xvars[:hbs])]
+                # L_{i+1} = R_i
+                polynomials += [x + y for x, y in zip(xvars[:hbs], \
+                                                        next_xvars[hbs:])]
+            else:
+                # No block swapping in the last round.
+                # R_{i+1} = L_i
+                polynomials += [x + y for x, y in zip(xvars[:hbs], \
+                                                        next_xvars[:hbs])]
+                # L_{i+1} = L_i xor f(R_i)
+                polynomials += [x + y for x, y in zip(xored, \
+                                                        next_xvars[hbs:])]
+            mqsystem_parts.append(polynomials)
+        return PolynomialSequence(mqsystem_parts, self.ring)
+
+    def polynomials_sbox(self, yvars, zvars):
+        polynomials = list()
+        sboxes = deepcopy(self.sboxes)
+        for i in range(self.halfblock_size / self.SBOX_SIZE):
+            nbit = i * self.SBOX_SIZE
+            current_sbox = sboxes[i % len(sboxes)]
+            pols = current_sbox.polynomials()
+            gens = current_sbox.ring().gens()
+            new_gens = yvars[nbit:nbit + self.SBOX_SIZE] + \
+                    zvars[nbit:nbit + self.SBOX_SIZE] 
+            sub = dict(zip(gens, new_gens))
+            pols = [p.subs(sub) for p in pols]
+            polynomials += pols
+        return polynomials
+
+    def __repr__(self):
+        gost_id = 'GOST cipher '
+        gost_id += '(Block Size = %d, Rounds = %d, '
+        gost_id += 'Key Addition = %s, Key Order = %s)' 
+        params = (self.block_size, self.nrounds, self.key_add, self.key_order)
+        return gost_id % params
+
+    def add_round_key(self, a, b, r=[]):
+        hbs = self.halfblock_size
+        is_defined  = lambda vals: all([p.constant() for p in vals])
+        # If all variables are defined, just compute the result instead of
+        # generating polynomials.
+        if is_defined(a) and is_defined(b):
+            if self.key_add is 'mod':
+                data = self.bits2int(a)
+                subkey = self.bits2int(b)
+                modulo_mask = (1 << hbs) - 1
+                result = (data + subkey) & modulo_mask
+                return [self.ring(i) for i in self.int2bits(result, hbs)]
+            if self.key_add is 'xor':
+                return [x + y for x, y, in zip(a, b)]    
+        else:
+            if self.key_add is 'mod':
+                pols = list()
+                pols.append(a[0] + b[0] + r[0]) 
+                for i in range(0, hbs - 1):
+                    pols.append(a[i] + a[i] * r[i] + a[i] * r[i+1] + a[i] *
+                            a[i+1] + a[i] * b[i+1] + r[i] * r[i+1] + r[i] *
+                            a[i+1] + r[i] * b[i+1])
+                    pols.append(b[i] + b[i] * r[i] + b[i] * r[i+1] + b[i] *
+                            a[i+1] + b[i] * b[i+1] + r[i] * r[i+1] + r[i] *
+                            a[i+1] + r[i] * b[i+1])
+                    pols.append(a[i] * r[i] + b[i] * r[i] + a[i] * b[i] + a[i]
+                            + b[i] + r[i+1] + a[i+1] + b[i+1])
+                return pols
+            if self.key_add is 'xor':
+                return [x + y + z for x, y, z in zip(r, a, b)]    
+
+    def shift(self, halfblock):
+        shift = ceil(self.halfblock_size / 3)
+        halfblock = halfblock[self.halfblock_size-shift:self.halfblock_size]+\ 
+                halfblock[0:self.halfblock_size-shift]
+        return halfblock
+
+    def substitute(self, halfblock):
+        result = []
+        for i in range(self.halfblock_size / self.SBOX_SIZE):
+            nbit = i * self.SBOX_SIZE
+            plain = halfblock[nbit:nbit + self.SBOX_SIZE]
+            sub = self.sboxes[i % len(self.sboxes)](plain)
+            sub = [self.ring(j) for j in sub]
+            result += sub
+        return result
+
+    def xor_blocks(self, left, right):
+        return [x + y for x, y in zip(left, right)]
+
+    def feistel_round(self, block, subkey):
+        hbs = self.halfblock_size
+        bs = self.block_size
+        n1 = block[0:hbs] # left
+        n2 = block[hbs:bs]; # right
+        temp = n1
+        n1 = self.add_round_key(n1, subkey)
+        n1 = self.substitute(n1);
+        n1 = self.shift(n1);
+        n2 = self.xor_blocks(n1, n2)
+        n1 = temp
+        return n2 + n1
+
+    def _cast_params(self, data_, key_):
+        bs = self.block_size
+        data = deepcopy(data_)
+        key = deepcopy(key_)
+        if not isinstance(data, list):
+            data = self.int2bits(data, bs)
+        data = [self.ring(i) for i in data]
+        if len(key) != self.key_length:
+            raise TypeError('Key should be of length ' + str(self.key_length))
+        # coerse key bits to ring elements
+        for i in range(len(key)):
+            if not isinstance(key[i], list):
+                key[i] = self.int2bits(key[i], self.halfblock_size)
+            key[i] = [self.ring(j) for j in key[i]]
+        return data, key
+
+    def encrypt(self, data_, key_):
+        hbs = self.halfblock_size
+        bs = self.block_size
+        if isinstance(data_, list):
+            is_list = true;
+        else:
+            is_list= false;
+        data, key = self._cast_params(data_, key_)
+
+        for i in range(self.nrounds):
+            if self.key_order == 'frwrev' and \
+                    i >= (self.nrounds - self.key_length):
+                k = self.key_length - 1 - (i % self.key_length)
+            else:
+                k = i % self.key_length
+            data = self.feistel_round(data, key[k])
+        data = data[hbs:bs] + data[0:hbs]
+        if is_list:
+            return data
+        else:
+            return self.bits2int(data)
+
+    def decrypt(self, data_, key_):
+        hbs = self.halfblock_size
+        bs = self.block_size
+        if isinstance(data_, list):
+            is_list = true;
+        else:
+            is_list= false;
+        data, key = self._cast_params(data_, key_)
+
+        key.reverse()
+        for i in range(self.nrounds):
+            if self.key_order == 'frwrev' and i < self.key_length:
+                k = self.key_length - 1 - (i % self.key_length)
+            else:
+                k = i % self.key_length
+            data = self.feistel_round(data, key[k])
+        data = data[hbs:bs] + data[0:hbs]
+        if is_list:
+            return data
+        else:
+            return self.bits2int(data)
+
+    def random_key(self):
+        key = [list(random_vector(int(self.halfblock_size), x=2)) 
+                for _ in range(self.key_length)]
+        key = [map(self.ring, i) for i in key]
+        return key
+
+    def random_block(self):
+        return map(self.ring, list(random_vector(self.block_size, x=2)))
+
+    def test_mqsystem(self, f_):
+        if f_.ring() is not self.ring:
+            raise TypeError('Tested MQ system has been generated by a ' 
+                    'different GOST instance')
+        f = deepcopy(f_)
+        print 'Testing MQ system', f
+        bs = self.block_size
+        plaintext = self.random_block()
+        key = self.random_key()
+        ciphertext = self.int2bits(self.encrypt(plaintext, key), bs)
+        f = f.subs(dict(zip(self.gen_vars(self.var_names['block'], \
+                                            0), plaintext)))
+        f = f.subs(dict(zip(self.gen_vars(self.var_names['block'], \
+                                            self.nrounds), ciphertext)))
+        for i in range(self.nrounds):
+            k = i % self.key_length
+            f = f.subs(dict(zip(self.gen_vars(self.var_names['key'], i), \
+                                                                key[k])))
+        s = f.ideal().interreduced_basis()
+        if s == [1]:
+            print 'MQ System for' + str(self) + 'is INCORRECT'
+            print f
+            return False
+        else:
+            return True
+
+
+    def test_cipher(self):
+        keys = [
+                [0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0], 
+                [0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, \
+                    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF], 
+                [0x01234567, 0x89ABCDEF, 0x01234567, 0x89ABCDEF, \
+                    0x01234567, 0x89ABCDEF, 0x01234567, 0x89ABCDEF], 
+                [0x6ebabf8d, 0x1a8cad60, 0x124744f9, 0xd400b5d8, \
+                    0xa721e3fd, 0x11d0702d, 0x06fd4827, 0x476df4bf]
+                ]
+        plain = [
+                0x0000000000000000, 0xBDBDBDBDACACACAC, 0xFFFFFFFFFFFFFFFF, \
+                    0x89ABCDEF01234567, 0xC0AE942BC8A99A39
+                ]
+        cipher = [
+                0x12610BE2A6C2FDC9, 0xA587E5D3F6DFB6F4, 0x029BFE67A9364E44, \
+                    0x523FC1A6AEC71B9A, 0x780CB7CE063F59E2,
+                0x9057C2CF13AAAD6D, 0xF7B085BA4771F406, 0x780416781B29BC06, \
+                    0xE596A183FD645558, 0x8EC42736538740AB,
+                0xF1956B1D0A1A67DE, 0x9E4C808408DCDBDC, 0x7738AF92DE8FC770, \
+                    0x9C44633FCEC0A03E, 0xC23013406002E268,
+                0x91DB8E1FE489FAEF, 0x547BF353604A8190, 0x92B517E3CC91B9D0, \
+                    0x1F5C2195762513E2, 0xE99D1C8DFF44A74C
+                ]
+
+        def show_failed(plain, key, result, expected):
+            print 'GOST FAILED'
+            print 'key:\t\t', ['0x%8.8X' % subk for subk in key]
+            print 'plaintext:\t', "0x%16.16X" % plain
+            print 'expected:\t', "0x%16.16X" % expected
+            print 'actual:\t\t', "0x%16.16X" % result
+
+        if self.block_size == 64 and self.nrounds == 32 and \
+                self.key_add == 'mod' and self.key_order == 'frwrev':
+            print 'Testing ', self, 'using test vectors...'
+            it = cipher.__iter__()
+            for k in keys:
+                for p in plain:
+                    c = self.encrypt(p, k)
+                    expected = it.next() 
+                    if c != expected:
+                        show_failed(p, k, c, expected)
+                        return False
+        print 'Testing', self, 'by correct decryption...'
+        x = randint(0, 2^self.block_size)
+        key = list(random_vector(self.key_length, x = 2^self.block_size))
+        c = self.encrypt(x, key)
+        d = self.decrypt(c, key)
+        if x != d:
+            show_failed(x, key, d, x)
+            return False
+        return True
+\end{lstlisting}
+
+
+\chapter{SOURCE CODE FOR SOLVING 5 ROUND GOST EQUATION SYSTEM}
+\label{app:solving-sat}
+
+\begin{lstlisting}
+attach gost.sage
+attach anf2cnf.py
+
+nr = 5
+bs = 64
+hbs = int(bs/2)
+varnames = ['a', 'b', 'c', 'd']
+gosts = [Gost(block_size=bs, 
+    rounds=nr, 
+    key_add='mod', 
+    key_order='frw', 
+    prefix=i) for i in varnames]
+
+print 'constructing MQ systems...'
+mqsystems = [i.polynomial_system() for i in gosts]
+
+print 'generating plaintext/ciphertext data...'
+inputs = [i.random_block() for i in gosts]
+key = gosts[0].random_key()
+outputs = [gosts[i].encrypt(inputs[i], key) for i in range(len(gosts))]
+
+print  'injecting known variables...'
+for i in range(len(mqsystems)):
+    mqsystems[i] = mqsystems[i].inject(gosts[i].gen_vars(
+            gosts[i].var_names['block'], 0), inputs[i])
+    mqsystems[i] = mqsystems[i].inject(gosts[i].gen_vars(
+            gosts[i].var_names['block'], nr), outputs[i])
+
+print 'combining MQ systems...'
+f = join_systems(mqsystems, gosts)
+
+print 'solving MQ system with SAT solver...'
+print time.ctime()
+solver = ANFSatSolver(f.ring())
+s, t = solver(f)
+print 'DONE'
+print time.ctime()
+
+recovered_key = []
+r = f.ring()
+for i in range(len(key)):
+    var_names = map(str, gosts[0].gen_vars(
+            gosts[0].var_names['key'], i))
+    var_names.sort()
+    var_names = map(r, var_names)
+    recovered_key.append([s[j] for j in var_names])
+
+if gosts[0].int2bits(gosts[0].encrypt(
+    inputs[0], recovered_key), bs) == outputs[0]:
+    if key == recovered_key:
+        print recovered_key
+    else:
+        print 'FOUND ANOTHER KEY'
+        print 'actual'
+        print key
+        print 'found'
+        print recovered_key
+\end{lstlisting}
+
+\chapter{S-BOXES USED IN GOST~28147-89 IMPLEMENTATION}
+\label{app:gost-sboxes}
+
+\begin{equation}
+    \nonumber
+    \begin{array}{lllllllllllllllll}
+        S_1 =&  \{4, &  10, &  9, &  2, &  13, &  8, &  0, &  14, &  6, &  11, &  1, &  12, &  7, &  15, &  5, &  3 \} \\
+        S_2 =&  \{14, &  11, &  4, &  12, &  6, &  13, &  15, &  10, &  2, &  3, &  8, &  1, &  0, &  7, &  5, &  9 \} \\
+        S_3 =&  \{5, &  8, &  1, &  13, &  10, &  3, &  4, &  2, &  14, &  15, &  12, &  7, &  6, &  0, &  9, &  11 \} \\
+        S_4 =&  \{7, &  13, &  10, &  1, &  0, &  8, &  9, &  15, &  14, &  4, &  6, &  12, &  11, &  2, &  5, &  3 \} \\
+        S_5 =&  \{6, &  12, &  7, &  1, &  5, &  15, &  13, &  8, &  4, &  10, &  9, &  14, &  0, &  3, &  11, &  2 \} \\
+        S_6 =&  \{4, &  11, &  10, &  0, &  7, &  2, &  1, &  13, &  3, &  6, &  8, &  5, &  9, &  12, &  15, &  14 \} \\
+        S_7 =&  \{13, &  11, &  4, &  1, &  3, &  15, &  5, &  9, &  0, &  10, &  14, &  7, &  6, &  8, &  2, &  12 \} \\
+        S_8 =&  \{1, &  15, &  13, &  0, &  5, &  7, &  10, &  4, &  9, &  2, &  3, &  14, &  6, &  11, &  8, &  12 \}
+    \end{array}
+\end{equation}
+
+
+\chapter{LIST OF PUBLICATIONS}
+
+\begingroup
+\renewcommand{\chapter}[2]{}%
+\begin{thebibliography}{1}
+\providecommand*{\BibEmph}[1]{#1}
+\providecommand*{\cyrdash}{\hbox to.8em{--\hss--}}
+\providecommand*{\BibDash}{\ifdim\lastskip>0pt\unskip\nobreak\hskip.2em\fi\cyrdash\hskip.2em\ignorespaces}
+
+\bibitem{Kiyanchuk:DESSERT:2012}
+\BibEmph{Oliynykov~R.~V., Kiyanchuk~R.~I.} {Perspective Symmetric Block Cipher
+  optimized for Hardware Implementation}~// {6-th International Conference
+  ``Dependable Systems, Services \& Technologies (DESSERT'12)''}. \BibDash
+\newblock 2012.
+
+\bibitem{Kiyanchuk:visnyk:2012}
+\BibEmph{Kiyanchuk~R.~I., Oliynykov~R.~V.} {Linear transformation properties of
+  ZUC cipher}~// \BibEmph{Visnyk}. \BibDash
+\newblock 2012. \BibDash
+\newblock {Mathematical modeling. Information technologies. Computer-aided
+  control systems.}
+
+\bibitem{karazina:zuc}
+\BibEmph{{Kiyanchuk, R. I. and Oliynykov R. V.}} {Linear transformation
+  properties of ZUC cipher}~// {Computer modeling in high-end technologies}~/
+  Kharkiv national university of radio electronics. \BibDash
+\newblock {Kharkiv}, 2012. \BibDash
+\newblock P.~199 -- 202.
+
+\bibitem{Kiyanchuk:2012:Banking}
+\BibEmph{Kiyanchuk~R.~I.} {Differential analysis of S-functions
+  [In~Russian]}~// {Scientific youth researching for European integration}~/
+  Kharkiv university of banking. \BibDash
+\newblock Kharkiv, 2012. \BibDash
+\newblock Electronic resource on CD-ROM.
+
+\bibitem{Kiyanchuk:2012:MMF}
+\BibEmph{Kiyanchuk~R.~I.} {Differential analysis of S-functions
+  [In~Russian]}~// {Radioelectronics and youth in XXI century}~/ Kharkiv
+  national university of radio electronics. \BibDash
+\newblock Kharkiv, 2012. \BibDash
+\newblock {С.}~130 -- 131.
+
+\bibitem{Kiyanchuk:2011:MMF}
+\BibEmph{Kiyanchuk~R.~I.} {Comparative analysis of IDEA-like Block Symmetric
+  Ciphers [In~Ukrainian]}~// {International Conference ``Computer
+  Engineering''}~/ {Kharkiv National University of Radio Electronics}. \BibDash
+\newblock Т.~5. \BibDash
+\newblock Kharkiv, 2011. \BibDash April. \BibDash
+\newblock {С.}~225 -- 227.
+
+\bibitem{Kiyanchuk:IREF:2011:present}
+\BibEmph{Oliynykov~R.~V., Kiyanchuk~R.~I.} {Perspective Symmetric Block Cipher
+  Optimized for Hardware Implementation [In~Russian]}~// {``Telecommunication
+  Systems and Technologies''}~/ {Kharkiv National University of Radio
+  Electronics}. \BibDash
+\newblock Vol.~II. \BibDash
+\newblock {Kharkiv, Ukraine}, 2011. \BibDash October. \BibDash
+\newblock P.~321 -- 330.
+
+\bibitem{Kiyanchuk:2011:Customs}
+\BibEmph{Oliynykov~R.~V., Kiyanchuk~R.~I.} {Usage of T-functions in Symmetric
+  Cryptographic Transformations [In~Russian]}~// {``Perspectives of Information
+  and transport-customs technologies in customs affairs, external economic
+  industry and organizations management''}~/ {Kharkiv National University of
+  Radio Electronics}. \BibDash
+\newblock Dnipropetrovs'k, 2011. \BibDash December. \BibDash
+\newblock {С.}~213 -- 215. \BibDash
+\newblock Section 2.
+
+\bibitem{Kiyanchuk:2009:rijndael}
+\BibEmph{Dolgov~V.~I., Lysytska~I.~V., Kiyanchuk~R.~I.} {RIJNDAEL -- Is This a
+  New or Well Forgotten Old Solution? [In~Russian]}~// {Computer Science and
+  Technologies}~/ {Kharkiv National University of Radio Electronics}. \BibDash
+\newblock 2009. \BibDash
+\newblock P.~32 -- 35.
+
+\end{thebibliography}
+\endgroup
+
+\end{appendices}

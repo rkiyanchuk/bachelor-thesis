@@ -1,0 +1,98 @@
+%&latex
+% Copyright 2011 Zoresvit (c) <zoresvit@gmail.com>
+% 
+% 
+%/
+
+\begin{tikzpicture}
+    \tikzstyle{func} = [circle, draw=blue!40, fill=blue!20, thick, minimum size = 8mm]
+    \tikzstyle{elem} = [circle, draw=green!40, fill=green!20, thick, minimum size = 8mm]
+    \tikzstyle{bound} = [node distance=2em]
+    \tikzstyle{backfill} = [fill=blue!10, rounded corners]
+    \tikzstyle{linkbelow} = [bend right, looseness=0.7]
+    \tikzstyle{linkabove} = [bend left, looseness=1.2]
+    \tikzstyle{linklabel} = [circle, fill=cyan!10, minimum size=5mm, inner sep=0, draw, above, sloped, midway]
+
+    \node (H1) [node distance=3ex] {\Large $H^1$};
+    \node[func] (H11) [below=of H1]  {$H^1_1$};
+    \node[func] (H12) [below=of H11] {$H^1_2$};
+    \node[func] (H13) [below=of H12] {$H^1_3$};
+    \node[bound] (H1bound) [left=of H1] {};
+
+    \node (M1) [node distance=0.55\textwidth, right=of H1]  {\Large $M^1$};
+    \node[func] (M11) [below=of M1]  {$M^1_1$};
+    \node[func] (M12) [below=of M11] {$M^1_2$};
+    \node[func] (M13) [below=of M12] {$M^1_3$};
+    \node[bound] (M1bound) [right=of M1] {};
+
+    \node (H2) [node distance=3ex, below=of H13] {\Large $H^2$};
+    \node[func] (H21) [below=of H2]  {$H^2_1$};
+    \node[func] (H22) [below=of H21] {$H^2_2$}; 
+    \node[func] (H23) [below=of H22] {$H^2_3$}; 
+    \node[bound] (H2bound) [left=of H2] {};
+
+    \node (M2) [node distance=3ex, below=of M13]  {\Large $M^2$};
+    \node[func] (M21) [below=of M2]  {$M^2_1$};
+    \node[func] (M22) [below=of M21] {$M^2_2$};
+    \node[func] (M23) [below=of M22] {$M^2_3$};
+    \node[bound] (M2bound) [right=of M2] {};
+
+    \node[elem] (Env) [node distance=0.18\textwidth, right=of H1] {Environment};
+    \node[elem] (Prod) [node distance=0.2\textwidth, right=of H23] {Product};
+
+
+    \foreach \H / \M in {H11/M11, H21/M21, H21/M11, H11/M21}{
+    \draw (\H) to [->, linkbelow] (\M) node[linklabel]{1};
+    }
+
+    \foreach \M / \Prod in {M11/Prod, M21/Prod}{
+    \draw (\M) to [->, linkbelow] (\Prod) node[linklabel]{2};
+    }
+
+    \foreach \H / \Prod in {H11/Prod, H21/Prod}{
+    \draw (\H) to [<->, linkabove] (\Prod) node[linklabel]{3};
+    }
+
+    \foreach \H / \Env in {H12/Env, H22/Env}{
+    \draw (\H) to [->, linkbelow] (\Env) node[linklabel]{4};
+    }
+
+    \foreach \Env / \H in {Env/H13, Env/H23}{
+    \draw (\H) to [<-, linkbelow] (\Env) node[linklabel]{5};
+    }
+
+    \foreach \Prod / \H in {Prod/H13, Prod/H23}{
+    \draw (\Prod) to [->, linkbelow] (\H) node[linklabel]{6};
+    }
+
+    \foreach \M / \Env in {M13/Env, M23/Env}{
+    \draw (\M) to [->, linkabove] (\Env) node[linklabel]{7};
+    }
+
+    \foreach \Hact / \Hpsy in {H11/H13, H21/H23}{
+    \draw (\Hact) to [->, linkabove] (\Hpsy) node[linklabel]{8};
+    }
+
+    \foreach \Hpsy / \Hbio in {H13/H12, H23/H22}{
+    \draw (\Hpsy) to [->, linkabove] (\Hbio) node[linklabel]{9};
+    }
+
+    \foreach \H / \M in {H11/M13, H21/M23}{
+    \draw (\H) to [->, linkabove] (\M) node[linklabel]{10};
+    }
+
+    \foreach \Env / \M in {Env/M12, Env/M22}{
+    \draw (\Env) to [->, linkbelow] (\M) node[linklabel]{11};
+    }
+
+    \draw (H13) to [<->, linkabove] (H23) node[linklabel]{12};
+    \draw (M13) to [<->, linkbelow] (M23) node[linklabel]{13};
+
+    \begin{pgfonlayer}{background}
+        \node [backfill, fit= (H1) (H11) (H12) (H13) (H1bound)] {};
+        \node [backfill, fit= (M1) (M11) (M12) (M13) (M1bound)] {};
+        \node [backfill, fit= (H2) (H21) (H22) (H23) (H2bound)] {};
+        \node [backfill, fit= (M2) (M21) (M22) (M23) (M2bound)] {};
+    \end{pgfonlayer}
+\end{tikzpicture}
+

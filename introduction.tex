@@ -1,0 +1,77 @@
+%&latex                                                          
+% Copyright 2011 Ruslan Kiyanchuk (c) <ruslan.kiyanchuk@gmail.com>
+%/
+\Chapter{INTRODUCTION}
+\label{sec:intro}
+
+Symmetric cryptographic transformations are known to be the only effective method
+of providing data confidentiality and integrity in all fields of communication
+technologies~\cite{moldovyan2007innovative}. They need to be not only
+cryptographically strong, but also have high performance and low resources
+consumption to satisfy modern needs for securing information. Consequently,
+robust requirements on cryptographic security, lightweight implementation and
+performance are entrusted to such transformations.
+
+Symmetric ciphers came through a long history of development and improvement
+from the most primitive schemes based on symbols substitution and disk
+encryptors to advanced mathematical algorithms following Kerckhoffs'
+principle~\cite{kahn1996codebreakers}.
+A tremendous contribution to enciphering theory has been done by Claude
+Shannon's work~\cite{shannon:secrecy} back in 1949. He introduced the
+fundamentals of information theory and made it possible to evaluate and
+mathematically prove cipher security. Ubiquitous computerization, mass
+deployment of pervasive devices and extensive Internet access caused
+cryptography to find comprehensive applications in information systems. Despite
+the advanced mathematics behind modern cryptoalgorithms, real operating
+security systems often have weaknesses due to incorrect usage or implementation
+errors.
+
+Security of mobile communication systems fell far behind from what was
+state-of-the-art in modern cryptography. The A5/1 cipher used in GSM standard
+for over 10 years can be broken within seconds using a combined distributed
+rainbow table code book to decrypt GSM voice calls and text
+messages~\cite{secproject}.
+Communication over satellite phones has also been shown to be insecure after
+reverse engineering the proprietary ciphers \mbox{GMR-1} and \mbox{GMR-2}.
+\mbox{GMR-1} is a variant of A5/2 cipher (which is prohibited for
+implementation in mobile phones as of July 2007) and is vulnerable to a known
+ciphertext-only attack with an average case complexity of
+$2^{32}$~\cite{3gpp:a52:2007}.
+\mbox{GMR-2} is an original cipher, but its session key can be recovered with
+65 bytes of keystream at a moderate computational
+complexity~\cite{kiyanchuk:zuc}. 
+
+The need of deep analysis and public evaluation of cryptographic algorithms
+before deploying them into real systems is obvious. Several ciphers are
+considered for becoming worldwide standards in the field of providing data
+confidentiality at the moment. 
+
+PRESENT is a lightweight block cipher published
+as an ISO standard in 2012~\cite{isoiec-29192}. While being designed for
+providing moderate security level it is not yet clear if the design of the cipher is
+optimal for lightweight cryptography purposes. 
+
+ZUC is a newly developed
+Chinese stream cipher recommended for use in 3GPP Long Term Evolution (LTE)
+mobile communications standard and going through public evaluation since
+2011~\cite{3gpp:eea3_doc4}. After discovering few weaknesses some nontrivial
+changes had been made to the cipher which is now exposed to the second
+iteration of public evaluation\cite{3gpp:eea3_doc2}.
+
+GOST~28147-89 is a legacy cipher that has been a subject to cryptanalysis
+for more than 20 years. 
+Despite its wide usage in Ukraine and
+other CIS countries since the publication in 1990, the cipher has been proposed for
+international standardization only in 2010, but hasn't been
+accepted however~\cite{isoiec-18033}.
+Therefore a detailed security evaluation and properties analysis of these
+ciphers are needed before their pervasive deployment into security systems.
+
+\labourprotection{
+    Chapter~\ref{sec:labour} analyses PC users working conditions and
+    their compliance with normative documents on safety engineering  and
+    sanitation. For retrieving and evaluating the influence of possible dangerous
+    or harmful production factors an interaction system
+    ``Human--Machine--Environment'' (HME) is developed. Safety measures are
+    developed as the result of such system analysis.
+}
