@@ -7,10 +7,12 @@
 \usetikzlibrary{arrows,decorations.pathmorphing,backgrounds,positioning,fit,decorations.pathreplacing}
 \geometry{left=25mm,right=15mm,top=20mm,bottom=20mm}
 \graphicspath{{images/}{images/lwc/}{images/zuc/}}
+\usepackage[figure,table]{totalcount}
+\usepackage{lastpage}
 
-% for quick removing labour protection part required by the university.
+% for quick removing of "labour protection" section required by the university.
 \newif\iflabour
-\labourtrue
+\labourfalse  % Exclude "Labour protection" section by default.
 \iflabour
 \newcommand{\labourprotection}[1]{#1}
 \else
@@ -20,21 +22,19 @@
 \title{Cryptographic properties analysis of symmetric ciphers}
 \author{Ruslan I. Kiyanchuk}
 
-
 \hypersetup{
 pdfauthor = {Ruslan I. Kiyanchuk},
 pdftitle = {Cryptographic properties analysis of symmetric ciphers},
 }
 
 \begin{document}
-\selectlanguage{english}
 
 \input{title}
 \input{abstracts}
 \tableofcontents
 \clearpage
-\input{abbreviations}
 
+\input{abbreviations}
 \input{introduction}
 \input{symmetric_transforms}
 \input{lwc}
@@ -49,4 +49,3 @@ pdftitle = {Cryptographic properties analysis of symmetric ciphers},
 \input{appendices}
 
 \end{document}
-

@@ -2,16 +2,12 @@
 % Copyright 2011 Ruslan Kiyanchuk (c) <ruslan.kiyanchuk@gmail.com>
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{dstu3008-95}[2012/05/06 Structure and typography guidelines.
+\ProvidesClass{dstu3008}[2012/05/06 Structure and typography guidelines.
 Documentation. Scintific and Technical Reports.]
 \typeout{Note that this tries to fulfill DSTU 3008-95
   requirements but it is unofficial}
 
 \LoadClassWithOptions{report}
-
-\RequirePackage[T2A]{fontenc}
-\RequirePackage[utf8]{inputenc}
-
 
 % CLASS OPTIONS
 % =============
@@ -57,7 +53,10 @@ Documentation. Scintific and Technical Reports.]
 % MULTILANGUAGE SETTINGS AND DECLARATIONS
 % =======================================
 
-\RequirePackage[ukrainian, russian, english]{babel}
+\RequirePackage{fontspec}
+\setmainfont{CMU Serif}
+
+\RequirePackage[ukrainian,english]{babel}
 
 \addto\captionsenglish{\renewcommand{\refname}{\MakeUppercase{References}}}
 \addto\captionsenglish{\renewcommand{\bibname}{\MakeUppercase{References}}}
