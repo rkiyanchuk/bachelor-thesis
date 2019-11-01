@@ -40,7 +40,7 @@ Documentation. Scintific and Technical Reports.]
 \RequirePackage{longtable}	 % for wrapping tables over multiple pages
 \RequirePackage{caption}
 \RequirePackage[ruled]{algorithm2e}
-\RequirePackage{listingsutf8}
+\RequirePackage{listings}
 \RequirePackage[compact]{titlesec}
 \RequirePackage{tocloft}
 \RequirePackage[title, titletoc]{appendix}
@@ -63,6 +63,7 @@ Documentation. Scintific and Technical Reports.]
 \addto\captionsenglish{\renewcommand{\appendixname}{APPENDIX}}
 \addto\captionsenglish{\renewcommand{\appendixpagename}{APPENDICES}}
 \addto\captionsenglish{\renewcommand{\appendixtocname}{APPENDICES}}
+\addto\captionsenglish{\renewcommand{\algorithmcfname}{Algorithm}}
 
 \addto\captionsukrainian{\renewcommand{\abstractname}{\MakeUppercase{Реферат}}}
 \addto\captionsukrainian{\renewcommand{\contentsname}{\MakeUppercase{Зміст}}}
@@ -74,18 +75,6 @@ Documentation. Scintific and Technical Reports.]
 \addto\captionsukrainian{\renewcommand{\lstlistingname}{Лістинг}}
 \addto\captionsukrainian{\renewcommand{\listalgorithmcfname}{Список алгоритмів}}
 \addto\captionsukrainian{\renewcommand{\algorithmcfname}{Алгоритм}}
-
-\addto\captionsrussian{\renewcommand{\abstractname}{Реферат}}
-\addto\captionsrussian{\renewcommand{\contentsname}{Содержание}}
-\addto\captionsrussian{\renewcommand{\appendixname}{Приложения}}
-\addto\captionsrussian{\renewcommand{\refname}{Список литературы}}
-\addto\captionsrussian{\renewcommand{\bibname}{Список литературы}}
-\addto\captionsrussian{\renewcommand{\figurename}{Рисунок}}
-\addto\captionsrussian{\renewcommand{\tablename}{Таблица}}
-\addto\captionsrussian{\renewcommand{\lstlistingname}{Листинг}}
-\addto\captionsrussian{\renewcommand{\listalgorithmcfname}{Список алгоритмов}}
-\addto\captionsrussian{\renewcommand{\algorithmcfname}{Алгоритм}}
-
 
 
 % TYPOGRAPHY

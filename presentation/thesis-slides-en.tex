@@ -1,4 +1,4 @@
-%&latex
+%be&latex
 % Copyright 2011 Zoresvit (c) <zoresvit@gmail.com>
 
 \documentclass[10pt, ucs]{beamer}
@@ -42,7 +42,7 @@
 
 \hypersetup{
 pdftitle = {\worktitle},
-pdfauthor = {\workauthors}, 
+pdfauthor = {\workauthors},
 pdfkeywords = {}
 }
 
@@ -88,7 +88,7 @@ pdfkeywords = {}
             \item pervasive devices must provide data security;
             \item the computational resources are constrained;
             \item ciphers with efficient hardware implementation are needed.
-        \end{itemize}    
+        \end{itemize}
     \end{block}
     }
     \onslide<2->{
@@ -117,9 +117,9 @@ pdfkeywords = {}
         \begin{itemize}
             \item 16 elements over {\small $GF(p) = GF(2^{31}-1)$};
             \item period $p^{16} -1 \approx 2^{496}$;
-            \item $X_0 = s_{15_H} || s_{14_L}$,  \\ 
-                $X_1 = s_{11_L} || s_{14_H}$,  \\ 
-                $X_2 = s_{7_L} || s_{5_H}$,  \\ 
+            \item $X_0 = s_{15_H} || s_{14_L}$,  \\
+                $X_1 = s_{11_L} || s_{14_H}$,  \\
+                $X_2 = s_{7_L} || s_{5_H}$,  \\
                 $X_3 = s_{2_L} || s_{0_H}$;
             \item $R_1$, $R_2$ -- registers;
             \item $L_1$, $L_2$
@@ -198,7 +198,7 @@ pdfkeywords = {}
         \begin{itemize}
             \item 64 bits encryption block.
             \item Substitution layer: S-box $F_2^4 \rightarrow F_2^4$. \\
-            \item Permutation layer: 
+            \item Permutation layer:
                 \begin{equation}
                     \label{eqn:player}
                     \nonumber
@@ -217,7 +217,7 @@ pdfkeywords = {}
                         \setlength{\parsep}{0pt}
                     \item $ [k_{79} k_{78} \hdots k_1 k_0] = [k_{18} k_{17} \hdots k_{20} k_{19}] $;
                     \item $ [K_{79} k_{78} k_{77} k_{76}] = S[k_{79} k_{78} k_{77} k_{76}] $;
-                    \item $ [k_{19} k_{18} k_{17} k_{16} k_{15}] = [k_{19} k_{18} k_{17} k_{16} k_{15} 
+                    \item $ [k_{19} k_{18} k_{17} k_{16} k_{15}] = [k_{19} k_{18} k_{17} k_{16} k_{15}
                         \oplus \mbox{round\_counter}] $.
                 \end{enumerate}
         \end{itemize}
@@ -299,7 +299,7 @@ pdfkeywords = {}
         \item multivariate equation system is constructed in ANF using SAGE;
         \item polynomial system is converted from ANF to CNF with \verb+anf2cnf+;
         \item \verb+CryptoMiniSat+ finds satisfiable set of variable values.
-    \end{enumerate} 
+    \end{enumerate}
     \end{block}
     \begin{example}
 \begin{lstlisting}
@@ -336,7 +336,7 @@ sage: s, t = solver(f)
             \item 5 rounds of GOST equation system are solvable at the moment;
             \item with further optimizations multivariate equation systems with
                 more rounds may be successfully solved.
-        \end{itemize} 
+        \end{itemize}
     \end{block}
 \end{frame}
 
@@ -350,8 +350,8 @@ sage: s, t = solver(f)
             \providecommand*{\BibDash}{\ifdim\lastskip>0pt\unskip\nobreak\hskip.2em\fi\cyrdash\hskip.2em\ignorespaces}
 
             \bibitem{Kiyanchuk:DESSERT:2012}
-            \BibEmph{Oliynykov~R.~V., Kiyanchuk~R.~I.} 
-            \newblock {Perspective Symmetric Block Cipher optimized for Hardware Implementation}~// 
+            \BibEmph{Oliynykov~R.~V., Kiyanchuk~R.~I.}
+            \newblock {Perspective Symmetric Block Cipher optimized for Hardware Implementation}~//
             \newblock {6-th International Conference ``Dependable Systems, Services \& Technologies (DESSERT'12)''}. \BibDash 2012.
 
             \bibitem{Kiyanchuk:visnyk:2012}
@@ -401,6 +401,6 @@ sage: s, t = solver(f)
             2009. \BibDash P.~32 -- 35.
     \end{thebibliography}
 \endgroup
-\end{frame} 
+\end{frame}
 \end{document}
 

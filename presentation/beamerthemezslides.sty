@@ -1,7 +1,7 @@
-\RequirePackage[T2A]{fontenc}
-\RequirePackage[utf8]{inputenc}
+\RequirePackage{fontspec}
+\setmainfont{CMU Serif}
 
-\RequirePackage[english, russian, ukrainian]{babel}
+\RequirePackage[ukrainian,english]{babel}
 \addto\captionsukrainian{\renewcommand{\abstractname}{\MakeUppercase{Реферат}}}
 \addto\captionsukrainian{\renewcommand{\contentsname}{\MakeUppercase{Зміст}}}
 \addto\captionsukrainian{\renewcommand{\appendixname}{\MakeUppercase{Додатки}}}
@@ -9,20 +9,6 @@
 \addto\captionsukrainian{\renewcommand{\bibname}{\MakeUppercase{Перелік посилань}}}
 \addto\captionsukrainian{\renewcommand{\figurename}{Рисунок}}
 \addto\captionsukrainian{\renewcommand{\tablename}{Таблиця}}
-
-\addto\captionsrussian{\renewcommand{\abstractname}{Реферат}}
-\addto\captionsrussian{\renewcommand{\contentsname}{Содержание}}
-\addto\captionsrussian{\renewcommand{\appendixname}{Приложения}}
-\addto\captionsrussian{\renewcommand{\refname}{Список литературы}}
-\addto\captionsrussian{\renewcommand{\bibname}{Список литературы}}
-\addto\captionsrussian{\renewcommand{\figurename}{Рисунок}}
-\addto\captionsrussian{\renewcommand{\tablename}{Таблица}}
-
-\deftranslation[to=russian]{Theorem}{Теорема}
-\deftranslation[to=russian]{Proof}{Доказательство}
-\deftranslation[to=russian]{Definition}{Определение}
-\deftranslation[to=russian]{Corollary}{Следствие}
-\deftranslation[to=russian]{Example}{Пример}
 
 \deftranslation[to=ukrainian]{Theorem}{Теорема}
 \deftranslation[to=ukrainian]{Proof}{Доведення}
@@ -33,7 +19,6 @@
 \usetheme{Madrid}
 
 \RequirePackage{graphicx}
-\RequirePackage{pscyr}
 
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{blocks}[rounded][shadow=true] 
@@ -77,7 +62,7 @@
 
 % LISTINGS FORMAT
 % ---------------
-\usepackage{listingsutf8}
+\usepackage{listings}
 \usepackage{caption}
 \usepackage{xcolor}
 % Caption customizations for code listings
